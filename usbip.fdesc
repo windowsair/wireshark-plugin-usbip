@@ -1,0 +1,136 @@
+# @author windowsair(msdn_01@sina.com)
+# @brief Generic dissector for USBIP
+# @version 0.1
+# @date 2021-03-05
+#
+# @copyright Copyright (c) 2021
+
+
+enum32 UsbipCommandType
+{
+    USBIP_CMD_SUBMIT 1
+    USBIP_RET_SUBMIT 3
+    USBIP_CMD_UNLINK 2
+    USBIP_RET_UNLINK 4
+}
+
+enum32 UsbipDirection
+{
+    USBIP_DIR_OUT 0
+    USBIP_DIR_IN  1
+}
+
+enum32 UsbipTransferFlags
+{
+    None                         0
+    URB_SHORT_NOT_OK             1
+    URB_ISO_ASAP                 2
+    URB_NO_TRANSFER_DMA_MAP      3
+    URB_ZERO_PACKET              4
+    URB_NO_INTERRUPT             5
+    URB_FREE_BUFFER              6
+    URB_DIR_MASK                 7
+}
+
+enum32 UsbipStatus
+{
+    Success 0
+}
+
+
+switch usbip_command_type_switch
+{
+    case UsbipCommandType::USBIP_CMD_SUBMIT : print ("Submit URB");
+    case UsbipCommandType::USBIP_RET_SUBMIT : print ("Reply URB");
+    case UsbipCommandType::USBIP_CMD_UNLINK : print ("Unlink URB");
+    case UsbipCommandType::USBIP_CMD_UNLINK : print ("Unlink URB reply");
+    default                                 : print ("Unknown command");
+}
+
+
+struct usbip_common_header
+{
+    byte_order big_endian;
+
+    UsbipCommandType message_type;
+    uint32 seq_num;
+    uint32 devid;
+    UsbipDirection direction;
+}
+
+
+
+#########################
+# helper struct START
+
+struct usbip_cmd_submit
+{
+    usbip_common_header common_header;
+
+    uint32 endpoint;
+    UsbipTransferFlags transfer_flags;
+    uint32 transfer_buffer_length;
+    uint32 start_frame;
+    uint32 number_of_packets;
+    uint32 interval;
+    raw(8) setup;
+
+    raw(transfer_buffer_length) URB_Data;
+}
+
+struct usbip_ret_submit
+{
+    usbip_common_header common_header;
+
+    uint32 endpoint;
+    UsbipStatus status;
+    uint32 actual_length;
+    uint32 start_frame;
+    uint32 number_of_packets;
+    uint32 error_count;
+    raw(8) setup;
+
+    raw(actual_length) URB_Data;
+}
+
+struct usbip_cmd_unlink
+{
+    usbip_common_header common_header;
+
+    uint32 endpoint;
+    uint32 seqnum;
+
+    raw(*) URB_Data;
+}
+
+struct usbip_ret_unlink
+{
+    usbip_common_header common_header;
+
+    uint32 endpoint;
+    uint32 status;
+
+    raw(*) URB_Data;
+}
+
+# helper struct END
+########################
+
+
+########################
+# Entry point START
+# Note: Do not use forward declaration
+
+switch USBIPMainSwitch UsbipCommandType
+{
+    case UsbipCommandType::USBIP_CMD_SUBMIT : usbip_cmd_submit "";
+    case UsbipCommandType::USBIP_RET_SUBMIT : usbip_ret_submit "";
+    case UsbipCommandType::USBIP_CMD_UNLINK : usbip_cmd_unlink "";
+    case UsbipCommandType::USBIP_RET_UNLINK : usbip_ret_unlink "";
+    default :
+        usbip_common_header  usbip_header;
+        raw(*)  content_of_message;
+}
+
+# Entry point END
+########################
