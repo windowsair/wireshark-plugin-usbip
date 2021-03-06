@@ -25,11 +25,11 @@ enum32 UsbipTransferFlags
     None                         0
     URB_SHORT_NOT_OK             1
     URB_ISO_ASAP                 2
-    URB_NO_TRANSFER_DMA_MAP      3
-    URB_ZERO_PACKET              4
-    URB_NO_INTERRUPT             5
-    URB_FREE_BUFFER              6
-    URB_DIR_MASK                 7
+    URB_NO_TRANSFER_DMA_MAP      4
+    URB_ZERO_PACKET              64
+    URB_NO_INTERRUPT             128
+    URB_FREE_BUFFER              256
+    URB_DIR_MASK                 512
 }
 
 enum32 UsbipStatus
@@ -75,7 +75,7 @@ struct usbip_cmd_submit
     uint32 interval;
     raw(8) setup;
 
-    raw(transfer_buffer_length) URB_Data;
+    raw(*) URB_Data;
 }
 
 struct usbip_ret_submit
@@ -90,7 +90,7 @@ struct usbip_ret_submit
     uint32 error_count;
     raw(8) setup;
 
-    raw(actual_length) URB_Data;
+    raw(*) URB_Data;
 }
 
 struct usbip_cmd_unlink
